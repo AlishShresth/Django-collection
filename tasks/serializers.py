@@ -29,7 +29,7 @@ class TaskSerializer(serializers.ModelSerializer):
         """Assign task to user by email if provided."""
         assigned_to_email = validated_data.pop("assigned_to_email", None)
         if assigned_to_email:
-            from auth.models import CustomUser
+            from jwt_auth.models import CustomUser
 
             try:
                 validated_data["assigned_to"] = CustomUser.objects.get(

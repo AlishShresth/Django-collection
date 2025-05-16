@@ -34,9 +34,16 @@ class Task(models.Model):
         null=True,
         blank=True,
         related_name="assigned_tasks",
+        db_index=True,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["id"]),
+        ]
