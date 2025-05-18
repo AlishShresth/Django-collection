@@ -8,7 +8,7 @@ from .permissions import IsProjectOwnerOrMember
 class ProjectViewSet(viewsets.ModelViewSet):
     """Viewset for Project CRUD operations."""
 
-    queryset = Project.objects.all()
+    queryset = Project.objects.select_related("owner").prefetch_related("members")
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, IsProjectOwnerOrMember]
 
