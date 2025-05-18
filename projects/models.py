@@ -21,6 +21,7 @@ class Project(models.Model):
             models.Index(fields=["name", "owner"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["updated_at"]),
+            models.Index(fields=["owner"]),
         ]
 
     def __str__(self):
