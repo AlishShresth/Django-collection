@@ -1,3 +1,5 @@
+from django.db import transaction
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from .models import CustomUser
 
@@ -23,8 +25,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         """Ensure passwords match and meet requirements."""
         if data["password"] != data["password2"]:
             raise serializers.ValidationError({"password": "Passwords must match"})
+        validate_password(data["password"])
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
         """Create a new user with hashed password."""
         validated_data.pop("password2")
