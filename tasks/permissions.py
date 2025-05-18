@@ -6,7 +6,12 @@ class IsOwnerOrAdmin(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
-            return obj.project.members.contain(request.user) or request.user.is_staff
+            return (
+                obj.created_by == request.user
+                or obj.project.owner == request.user
+                or obj.project.members.contains(request.user)
+                or request.user.is_staff
+            )
         return (
             obj.created_by == request.user
             or obj.project.owner == request.user

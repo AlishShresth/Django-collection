@@ -1,7 +1,29 @@
 from rest_framework import serializers
-from .models import Task
+from .models import Task, Comment, Attachment
 from projects.models import Project
+from jwt_auth.models import CustomUser
 from jwt_auth.serializers import UserSerializer
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for Comment model."""
+
+    author = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "author", "content", "created_at", "updated_at"]
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for Attachment model."""
+
+    uploaded_by = UserSerializer(read_only=True)
+    file = serializers.FileField()
+
+    class Meta:
+        model = Attachment
+        fields = ["id", "file", "uploaded_by", "uploaded_at"]
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -19,6 +41,9 @@ class TaskSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    comments = CommentSerializer(many=True, read_only=True)
+    attachments = AttachmentSerializer(many=True, read_only=True)
+    deadline = serializers.DateTimeField(required=False, allow_null=True)
 
     class Meta:
         model = Task
@@ -35,14 +60,15 @@ class TaskSerializer(serializers.ModelSerializer):
             "assigned_to_email",
             "created_at",
             "updated_at",
+            "deadline",
+            "comments",
+            "attachments",
         ]
 
-    def create(self, validated_data):
-        """Assign task to user by email if provided."""
+    def _assign_user_by_email(self, validated_data):
+        """Helper to assign user by email if provided."""
         assigned_to_email = validated_data.pop("assigned_to_email", None)
         if assigned_to_email:
-            from jwt_auth.models import CustomUser
-
             try:
                 validated_data["assigned_to"] = CustomUser.objects.get(
                     email=assigned_to_email
@@ -52,5 +78,15 @@ class TaskSerializer(serializers.ModelSerializer):
                     {"assigned_to_email": "User not found"}
                 )
 
+    def create(self, validated_data):
+        """Assign task to user by email if provided."""
+        self._assign_user_by_email(validated_data)
         validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """Assigned user update"""
+        self._assign_user_by_email(validated_data)
+        if "updated_by" not in validated_data:
+            validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
