@@ -1,5 +1,6 @@
 from django.db import models
 from jwt_auth.models import CustomUser
+from projects.models import Project
 
 
 class Task(models.Model):
@@ -24,6 +25,10 @@ class Task(models.Model):
             ("high", "High"),
         ],
         default="medium",
+    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
+    parent_task = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks"
     )
     created_by = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="created_tasks"

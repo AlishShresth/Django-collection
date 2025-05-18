@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Task
+from projects.models import Project
 from jwt_auth.serializers import UserSerializer
 
 
@@ -9,6 +10,15 @@ class TaskSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
     assigned_to_email = serializers.EmailField(write_only=True, required=False)
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(), source="project"
+    )
+    parent_task_id = serializers.PrimaryKeyRelatedField(
+        queryset=Task.objects.all(),
+        source="parent_task",
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = Task
@@ -18,6 +28,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "description",
             "status",
             "priority",
+            "project_id",
+            "parent_task_id",
             "created_by",
             "assigned_to",
             "assigned_to_email",
