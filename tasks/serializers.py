@@ -3,6 +3,7 @@ from .models import Task, Comment, Attachment
 from projects.models import Project
 from jwt_auth.models import CustomUser
 from jwt_auth.serializers import UserSerializer
+from .tasks import send_task_assignment_email
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -80,13 +81,25 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Assign task to user by email if provided."""
+        assigned_to_email = validated_data.get("assigned_to_email")
         self._assign_user_by_email(validated_data)
         validated_data["created_by"] = self.context["request"].user
-        return super().create(validated_data)
+        task = super().create(validated_data)
+        if assigned_to_email and task.assigned_to:
+            send_task_assignment_email.delay(task.id, task.assigned_to.email)
+        return task
 
     def update(self, instance, validated_data):
         """Assigned user update"""
+        assigned_to_email = validated_data.get("assigned_to_email")
         self._assign_user_by_email(validated_data)
         if "updated_by" not in validated_data:
             validated_data["updated_by"] = self.context["request"].user
-        return super().update(instance, validated_data)
+        task = super().update(instance, validated_data)
+        if (
+            assigned_to_email
+            and task.assigned_to
+            and task.assigned_to.email != assigned_to_email
+        ):
+            send_task_assignment_email.delay(task.id, task.assigned_to.email)
+        return task

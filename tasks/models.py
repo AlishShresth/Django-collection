@@ -44,6 +44,8 @@ class Task(models.Model):
         db_index=True,
     )
     deadline = models.DateTimeField(null=True, blank=True)
+    estimated_hours = models.FloatField(default=0.0)
+    actual_hours = models.FloatField(default=0.0)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
