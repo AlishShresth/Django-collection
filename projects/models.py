@@ -26,3 +26,18 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TaskStatus(models.Model):
+    """Model for custom task statuses per project."""
+
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="statuses"
+    )
+    name = models.CharField(max_length=50)
+    order = models.PositiveIntegerField(default=0)  # For Kanban sorting
+
+    class Meta:
+        unique_together = ["project", "name"]
+        indexes = [models.Index(fields=["project", "name"])]
+        ordering = ["order"]
