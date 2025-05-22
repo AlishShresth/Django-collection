@@ -47,12 +47,14 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "corsheaders",
     "jwt_auth",
     "tasks",
     "projects",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -188,6 +190,37 @@ DEFAULT_FROM_EMAIL = "Task Manager <no-reply@taskmanager.com>"
 CELERY_BEAT_SCHEDULE = {
     "check-deadline-reminders": {
         "task": "tasks.tasks.check_deadline_reminders",
-        "schedule": crontab(hour=9, minute=0) # Run daily at 9:00 am
+        "schedule": crontab(hour=9, minute=0),  # Run daily at 9:00 am
     }
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs/api.log",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "tasks": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+CORS_ALLOWED_ORIGINS = [config('CORS_ALLOWED_ORIGINS')]
+CORS_ALLOW_CREDENTIALS = True

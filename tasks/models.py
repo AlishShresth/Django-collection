@@ -10,7 +10,9 @@ class Task(models.Model):
 
     title = models.CharField(max_length=250)
     description = models.TextField(blank=True)
-    status = models.ForeignKey(TaskStatus, on_delete=models.SET_NULL, null=True, related_name="tasks")
+    status = models.ForeignKey(
+        TaskStatus, on_delete=models.SET_NULL, null=True, related_name="tasks"
+    )
     priority = models.CharField(
         max_length=20,
         choices=[
@@ -111,3 +113,19 @@ class Attachment(models.Model):
     class Meta:
         ordering = ["-uploaded_at"]
         indexes = [models.Index(fields=["task"]), models.Index(fields=["uploaded_by"])]
+
+
+class TaskHistory(models.Model):
+    """Model to track changes to tasks."""
+
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="history")
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, related_name="task_changes"
+    )
+    field = models.CharField(max_length=100)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.field} changed on {self.task.title} at {self.changed_at}"

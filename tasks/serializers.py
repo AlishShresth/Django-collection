@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_serializer
-from .models import Task, Comment, Attachment
+from .models import Task, Comment, Attachment, TaskHistory
 from projects.models import Project, TaskStatus, Sprint
 from projects.serializers import TaskStatusSerializer, SprintSerializer
 from jwt_auth.models import CustomUser
@@ -27,6 +27,19 @@ class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
         fields = ["id", "file", "uploaded_by", "uploaded_at"]
+
+
+class TaskHistorySerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = TaskHistory
+        fields = ["id", "task", "user", "field", "old_value", "new_value", "changed_at"]
+        extra_kwargs = {
+            "field": {"help_text": "Field that was changed"},
+            "old_value": {"help_text": "Previous value of the field"},
+            "new_value": {"help_text": "New value of the field"},
+        }
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -85,6 +98,7 @@ class TaskSerializer(serializers.ModelSerializer):
         allow_null=True,
         help_text="Story points for agile estimation",
     )
+    history = TaskHistorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Task
@@ -108,6 +122,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "story_points",
             "comments",
             "attachments",
+            "history",
             "created_at",
             "updated_at",
         ]
