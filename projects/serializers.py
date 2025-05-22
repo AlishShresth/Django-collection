@@ -1,8 +1,23 @@
 from django.db import transaction
 from rest_framework import serializers
-from .models import Project
+from .models import Project, TaskStatus, Sprint
 from jwt_auth.serializers import UserSerializer
 from jwt_auth.models import CustomUser
+
+
+class TaskStatusSerializer(serializers.ModelSerializer):
+    """Serializer for TaskStatus model."""
+    class Meta:
+        model = TaskStatus
+        fields = ["id", "project", "name", "order"]
+
+
+class SprintSerializer(serializers.ModelSerializer):
+    """Serializer for Sprint model."""
+    class Meta:
+        model = Sprint
+        fields = ["id", "project", "name", "start_date", "end_date", "created_at"]
+        
 
 
 class ProjectSerializer(serializers.ModelSerializer):

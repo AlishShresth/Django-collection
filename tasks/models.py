@@ -2,7 +2,7 @@ import os
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from jwt_auth.models import CustomUser
-from projects.models import Project
+from projects.models import Project, TaskStatus, Sprint
 
 
 class Task(models.Model):
@@ -10,15 +10,7 @@ class Task(models.Model):
 
     title = models.CharField(max_length=250)
     description = models.TextField(blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("todo", "To Do"),
-            ("in_progress", "In Progress"),
-            ("done", "Done"),
-        ],
-        default="todo",
-    )
+    status = models.ForeignKey(TaskStatus, on_delete=models.SET_NULL, null=True, related_name="tasks")
     priority = models.CharField(
         max_length=20,
         choices=[
@@ -46,6 +38,10 @@ class Task(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
     estimated_hours = models.FloatField(default=0.0)
     actual_hours = models.FloatField(default=0.0)
+    sprint = models.ForeignKey(
+        Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks"
+    )
+    story_points = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -113,7 +109,4 @@ class Attachment(models.Model):
 
     class Meta:
         ordering = ["-uploaded_at"]
-        indexes = [
-            models.Index(fields=["task"]),
-            models.Index(fields=["uploaded_by"])
-        ]
+        indexes = [models.Index(fields=["task"]), models.Index(fields=["uploaded_by"])]

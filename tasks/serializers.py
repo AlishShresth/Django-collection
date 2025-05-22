@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Task, Comment, Attachment
-from projects.models import Project
+from projects.models import Project, TaskStatus, Sprint
+from projects.serializers import TaskStatusSerializer, SprintSerializer
 from jwt_auth.models import CustomUser
 from jwt_auth.serializers import UserSerializer
 from .tasks import send_task_assignment_email
@@ -45,6 +46,17 @@ class TaskSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     attachments = AttachmentSerializer(many=True, read_only=True)
     deadline = serializers.DateTimeField(required=False, allow_null=True)
+    status = TaskStatusSerializer(read_only=True)
+    status_id = serializers.PrimaryKeyRelatedField(
+        queryset=TaskStatus.objects.all(),
+        source="status",
+        required=False,
+        allow_null=True,
+    )
+    sprint = SprintSerializer(read_only=True)
+    sprint_id = serializers.PrimaryKeyRelatedField(
+        queryset=Sprint.objects.all(), source="sprint", required=False, allow_null=True
+    )
 
     class Meta:
         model = Task
@@ -59,11 +71,16 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_by",
             "assigned_to",
             "assigned_to_email",
-            "created_at",
-            "updated_at",
             "deadline",
+            "estimated_hours",
+            "actual_hours",
+            "sprint",
+            "sprint_id",
+            "story_points",
             "comments",
             "attachments",
+            "created_at",
+            "updated_at",
         ]
 
     def _assign_user_by_email(self, validated_data):
