@@ -50,7 +50,7 @@ class Task(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        unique_together = [("project", "name")]
+        unique_together = [("project", "title")]
         indexes = [
             models.Index(fields=["project"]),
             models.Index(fields=["parent_task"]),
