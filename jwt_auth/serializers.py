@@ -1,14 +1,22 @@
 from django.db import transaction
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from .models import CustomUser
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
 
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
-    password2 = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        min_length=8,
+        help_text="Password (minimum 8 characters)",
+    )
+    password2 = serializers.CharField(
+        write_only=True, required=True, help_text="Confirm password"
+    )
 
     class Meta:
         model = CustomUser
@@ -20,6 +28,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "password2",
         ]
+        extra_kwargs = {
+            "email": {"help_text": "Unique email address"},
+            "phone_number": {"help_text": "Optional phone number (e.g., +1234567890)"},
+        }
 
     def validate(self, data):
         """Ensure passwords match and meet requirements."""

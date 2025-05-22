@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer
 from .models import Task, Comment, Attachment
 from projects.models import Project, TaskStatus, Sprint
 from projects.serializers import TaskStatusSerializer, SprintSerializer
@@ -33,29 +34,56 @@ class TaskSerializer(serializers.ModelSerializer):
 
     created_by = UserSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
-    assigned_to_email = serializers.EmailField(write_only=True, required=False)
+    assigned_to_email = serializers.EmailField(
+        write_only=True,
+        required=False,
+        help_text="Email of user to assign task to",
+    )
     project_id = serializers.PrimaryKeyRelatedField(
-        queryset=Project.objects.all(), source="project"
+        queryset=Project.objects.all(),
+        source="project",
+        help_text="Project ID",
     )
     parent_task_id = serializers.PrimaryKeyRelatedField(
         queryset=Task.objects.all(),
         source="parent_task",
         required=False,
         allow_null=True,
+        help_text="Parent task ID for subtasks",
     )
     comments = CommentSerializer(many=True, read_only=True)
     attachments = AttachmentSerializer(many=True, read_only=True)
-    deadline = serializers.DateTimeField(required=False, allow_null=True)
+    deadline = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text="Task deadline (ISO 8601 format)",
+    )
     status = TaskStatusSerializer(read_only=True)
     status_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskStatus.objects.all(),
         source="status",
         required=False,
         allow_null=True,
+        help_text="Task status ID",
     )
     sprint = SprintSerializer(read_only=True)
     sprint_id = serializers.PrimaryKeyRelatedField(
-        queryset=Sprint.objects.all(), source="sprint", required=False, allow_null=True
+        queryset=Sprint.objects.all(),
+        source="sprint",
+        required=False,
+        allow_null=True,
+        help_text="Sprint ID",
+    )
+    estimated_hours = serializers.FloatField(
+        default=0.0, help_text="Estimated hours to complete task"
+    )
+    actual_hours = serializers.FloatField(
+        default=0.0, help_text="Actual hours spent on task"
+    )
+    story_points = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="Story points for agile estimation",
     )
 
     class Meta:
@@ -65,6 +93,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "status",
+            "status_id",
             "priority",
             "project_id",
             "parent_task_id",
@@ -82,6 +111,11 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        extra_kwargs = {
+            "title": {"help_text": "Task title (max 250 characters)"},
+            "description": {"help_text": "Optional task description"},
+            "priority": {"help_text": "Task priority (low, medium, high)"},
+        }
 
     def _assign_user_by_email(self, validated_data):
         """Helper to assign user by email if provided."""
