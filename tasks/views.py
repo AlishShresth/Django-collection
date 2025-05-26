@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,6 +22,19 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "priority", "assigned_to__email"]
     ordering_fields = ["created_at", "priority"]
     ordering = ["-updated_at"]
+
+    def get_queryset(self):
+        user = self.request.user
+        base_qs = Task.objects.select_related(
+            "project", "parent_task", "created_by", "assigned_to"
+        ).prefetch_related('comments', 'attachments')
+        if user.is_staff:
+            return base_qs
+        if user.is_authenticated:
+            return base_qs.filter(
+                models.Q(project__owner=user) | models.Q(project__members=user)
+            ).distinct()
+        return base_qs.none
 
     def perform_create(self, serializer):
         """Set created_by to current user."""

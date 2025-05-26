@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,6 +15,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.select_related("owner").prefetch_related("members")
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, IsProjectOwnerOrMember]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            return Project.objects.filter(
+                models.Q(owner=user) | models.Q(members=user)
+            ).distinct().select_related("owner").prefetch_related("members")
+        return Project.objects.none()
 
     def perform_create(self, serializer):
         """Set owner to current user."""
